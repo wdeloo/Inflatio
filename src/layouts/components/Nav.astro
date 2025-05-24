@@ -24,7 +24,7 @@ const heightPx = height + "px"
     </li>
     {links.map(link => (
       <li>
-        <a style={{ height: heightPx, backgroundColor: path === link.href ? "rgb(0, 0, 0, 0.2)" : undefined }} class="content-center block rounded-lg hover:bg-black/10 transition-colors px-2" href={link.href}>
+        <a style={{ height: heightPx, backgroundColor: path === link.href ? "rgb(0, 0, 0, 0.1)" : undefined }} class="content-center block rounded-[6px] hover:bg-black/10 transition-colors px-2" href={link.href}>
           {link.label}
         </a>
       </li>

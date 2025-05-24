@@ -1,7 +1,10 @@
 ---
+import Form from '../components/Form'
+import Title from '../components/Title.astro'
 import Layout from '../layouts/Layout.astro'
 ---
 
 <Layout>
-	
+	<Title />
+  <Form client:only />
 </Layout>
