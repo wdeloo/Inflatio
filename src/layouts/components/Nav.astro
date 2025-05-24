@@ -1,0 +1,33 @@
+---
+interface Link {
+  label: string
+  href: string
+}
+
+const path = Astro.originPathname
+
+const links: Link[] = [
+  { label: "Calculator", href: "/" },
+  { label: "Historic", href: "/history" },
+]
+
+const height = 32
+const heightPx = height + "px"
+---
+
+<nav class="text-lg">
+  <ul class="flex flex-row items-center gap-1">
+    <li class="mr-3">
+      <a href="/">
+        <img width={heightPx} height={heightPx} src="/logo.svg" />
+      </a>
+    </li>
+    {links.map(link => (
+      <li>
+        <a style={{ height: heightPx, backgroundColor: path === link.href ? "rgb(0, 0, 0, 0.2)" : undefined }} class="content-center block rounded-lg hover:bg-black/10 transition-colors px-2" href={link.href}>
+          {link.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

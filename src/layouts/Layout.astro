@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css'
+import Nav from './components/Nav.astro'
 ---
 
 <!doctype html>
@@ -12,6 +13,29 @@ import '../styles/global.css'
 		<title>Inflatio</title>
 	</head>
 	<body>
-		<slot />
+		<header>
+			<Nav />
+		</header>
+		<main role="main">
+			<slot />
+		</main>
+		<footer>
+
+		</footer>
 	</body>
 </html>
+
+<style>
+	body {
+		font-family: "Rubik", sans-serif;
+		font-optical-sizing: auto;
+		font-weight: 400;
+		font-style: normal;
+	}
+
+	body > * {
+		max-width: 1032px;
+		padding: 16px;
+		margin-inline: auto;
+	}
+</style>
