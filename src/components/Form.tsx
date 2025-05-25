@@ -201,20 +201,26 @@ export default function Form() {
   const [date, setDate] = useState<Date | null>(null)
 
   return (
-    <form className="text-2xl font-medium flex flex-row items-center">
-      In
-      <span className="inline-block mx-2">
-        <CountriesInput countryState={[country, setCountry]} />
-      </span>
-      I've had
-      <span className="inline-block mx-2">
-        <MoneyInput moneyState={[money, setMoney]} />
-      </span>
-      in the bank since
-      <span className="inline-block mx-2">
-        <DateInput dateState={[date, setDate]} />
-      </span>
-      .
+    <form className="flex flex-col items-center">
+      <div className="text-2xl font-medium text-balance text-center mb-10">
+        In
+        <span className="inline-block mx-2">
+          <CountriesInput countryState={[country, setCountry]} />
+        </span>
+        I've had
+        <span className="inline-block mx-2">
+          <MoneyInput moneyState={[money, setMoney]} />
+        </span>
+        in the bank since
+        <span className="inline-block mx-2">
+          <DateInput dateState={[date, setDate]} />
+        </span>
+        .
+      </div>
+
+      <button className="py-1 px-2 cursor-pointer bg-black/5 hover:bg-black/10 flex flex-row items-center gap-1 transition-colors text-lg rounded-[6px]" type="submit">
+        <img src="/logo.svg" width="20px" /> Calculate
+      </button>
     </form>
   )
 }
