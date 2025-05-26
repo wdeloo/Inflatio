@@ -1,6 +1,7 @@
 import { getCountryData, getCountryDataList, type TCountryCode } from "countries-list";
 import countryCodeToFlagEmoji from "country-code-to-flag-emoji";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { type Calculator } from "./Calculator";
 
 function CountriesInput({ countryState }: { countryState: [TCountryCode, React.Dispatch<React.SetStateAction<TCountryCode>>] }) {
   const [isOpen, setOpen] = useState(false)
@@ -50,15 +51,17 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
 
   return (
     <div className="w-fit text-base font-normal relative" ref={componentRef}>
-      <button type="button" className="text-xl cursor-pointer hover:bg-black/10 focus:bg-black/10 px-2 py-1 rounded-[6px] transition-colors flex items-center" onClick={() => setOpen(prev => !prev)}>
-        <span className="emoji mr-1.5 text-3xl -mt-1">
+      <button type="button" className="text-xl cursor-pointer hover:bg-black/10 focus:bg-black/10 px-2 py-1.5 rounded-[6px] transition-colors flex items-center" onClick={() => setOpen(prev => !prev)}>
+        <span className="emoji mr-1.5 text-2xl">
           {countryCodeToFlagEmoji(country.iso2)}
         </span>
         {country.name}
       </button>
-      <ul className="max-h-80 overflow-y-auto absolute top-[calc(100%+var(--spacing)*2)] left-0 bg-black/5 rounded-[6px] min-w-full w-max max-w-70 shadow p-0.5" style={{ display: isOpen ? '' : 'none' }}>
-        {countries}
-      </ul>
+      <div style={{ display: isOpen ? '' : 'none' }} className="max-h-80 overflow-y-auto absolute top-[calc(100%+var(--spacing)*2)] left-0 bg-white rounded-[6px] min-w-full w-max max-w-70 shadow">
+        <ul className="bg-black/5 w-full h-full p-0.5">
+          {countries}
+        </ul>
+      </div>
     </div>
   )
 }
@@ -91,7 +94,7 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
 
   return (
     <div onClick={focusInput} className="flex flex-row items-stretch cursor-text rounded-[6px] text-2xl hover:bg-black/10 focus-within:bg-black/10 transition-colors pl-0.5 pr-2 py-1.5">
-      <span className="emoji -mt-0.5 select-none">
+      <span className="emoji select-none -translate-y-px">
         💲
       </span>
       <div className="relative w-fit min-w-8.5">
@@ -104,11 +107,11 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
 
 function DateInput({ dateState }: { dateState: [Date | null, React.Dispatch<React.SetStateAction<Date | null>>] }) {
   const now = new Date()
-  const before5 = new Date(now)
-  before5.setFullYear(before5.getFullYear() - 5)
+  const before = new Date(now)
+  before.setFullYear(before.getFullYear() - 20)
 
   const [isOpen, setOpen] = useState(false)
-  const [year, setYear] = useState(before5.getFullYear())
+  const [year, setYear] = useState(before.getFullYear())
   const [date, setDate] = dateState
 
   const componentRef = useRef<HTMLDivElement>(null)
@@ -152,56 +155,66 @@ function DateInput({ dateState }: { dateState: [Date | null, React.Dispatch<Reac
         <span className="emoji select-none text-2xl">
           📆
         </span>
-        {date ? <span>{getMonthName(date.getMonth()).slice(0, 3)}, {date.getFullYear()}</span> : <span className="text-black/50">{getMonthName(before5.getMonth()).slice(0, 3)}, {before5.getFullYear()}</span>}
+        {date ? <span>{getMonthName(date.getMonth()).slice(0, 3)}, {date.getFullYear()}</span> : <span className="text-black/50">{getMonthName(before.getMonth()).slice(0, 3)}, {before.getFullYear()}</span>}
       </button>
-      <div className="absolute top-[calc(100%+var(--spacing)*2)] select-none left-1/2 -translate-x-1/2 bg-black/5 rounded-[6px] w-max shadow p-0.5" style={{ display: isOpen ? '' : 'none' }}>
-        <div className="flex flex-row justify-center items-stretch my-1 text-xl gap-1">
-          <button onClick={decreaseYear} type="button" className="content-center px-2 group cursor-pointer">
-            <svg fill="none" className="stroke-black/50 group-hover:stroke-black transition-colors" strokeLinecap="round" strokeWidth={2} strokeLinejoin="round" viewBox="0 0 7 10" height={15}>
-              <path d="M 5 2 L 2 5 L 5 8" />
-            </svg>
-          </button>
-          <div className="w-[4ch] text-center tracking-tight">
-            {year}
+      <div style={{ display: isOpen ? '' : 'none' }} className="absolute top-[calc(100%+var(--spacing)*2)] select-none left-1/2 bg-white -translate-x-1/2 rounded-[6px] w-max shadow">
+        <div className="bg-black/5 w-full h-full p-0.5">
+          <div className="flex flex-row justify-center items-stretch my-1 text-xl gap-1">
+            <button onClick={decreaseYear} type="button" className="content-center px-2 group cursor-pointer">
+              <svg fill="none" className="stroke-black/50 group-hover:stroke-black transition-colors" strokeLinecap="round" strokeWidth={2} strokeLinejoin="round" viewBox="0 0 7 10" height={15}>
+                <path d="M 5 2 L 2 5 L 5 8" />
+              </svg>
+            </button>
+            <div className="w-[4ch] text-center tracking-tight">
+              {year}
+            </div>
+            <button onClick={increaseYear} type="button" className="content-center px-2 group cursor-pointer">
+              <svg fill="none" className="stroke-black/50 group-hover:stroke-black transition-colors" strokeLinecap="round" strokeWidth={2} strokeLinejoin="round" viewBox="0 0 7 10" height={15}>
+                <path d="M 2 2 L 5 5 L 2 8" />
+              </svg>
+            </button>
           </div>
-          <button onClick={increaseYear} type="button" className="content-center px-2 group cursor-pointer">
-            <svg fill="none" className="stroke-black/50 group-hover:stroke-black transition-colors" strokeLinecap="round" strokeWidth={2} strokeLinejoin="round" viewBox="0 0 7 10" height={15}>
-              <path d="M 2 2 L 5 5 L 2 8" />
-            </svg>
-          </button>
+          <ul className="grid grid-cols-3 text-base font-normal">
+            {Array.from({ length: 12 }).map((_, i) => {
+              function updateDate() {
+                const date = new Date()
+                date.setFullYear(year)
+                date.setMonth(i)
+
+                setDate(date)
+                setOpen(false)
+              }
+
+              return (
+                <li key={i}>
+                  <button onClick={updateDate} type="button" className="hover:bg-black/10 rounded-[6px] cursor-pointer w-full text-left transition-colors py-0.5 px-1.5">
+                    {getMonthName(i)}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
         </div>
-        <ul className="grid grid-cols-3 text-base font-normal">
-          {Array.from({ length: 12 }).map((_, i) => {
-            function updateDate() {
-              const date = new Date()
-              date.setFullYear(year)
-              date.setMonth(i)
-
-              setDate(date)
-              setOpen(false)
-            }
-
-            return (
-              <li key={i}>
-                <button onClick={updateDate} type="button" className="hover:bg-black/10 rounded-[6px] cursor-pointer w-full text-left transition-colors py-0.5 px-1.5">
-                  {getMonthName(i)}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
       </div>
     </div>
   )
 }
 
-export default function Form() {
+export default function Form({ setCalculator }: { setCalculator: Dispatch<SetStateAction<Calculator>> }) {
   const [country, setCountry] = useState<TCountryCode>("US")
   const [money, setMoney] = useState<number>(NaN)
   const [date, setDate] = useState<Date | null>(null)
 
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!country || !money || !date) return
+
+    setCalculator({ country, money, date })
+  }
+
   return (
-    <form className="flex flex-col items-center">
+    <form onSubmit={submit} className="flex flex-col items-center z-10">
       <div className="text-2xl font-medium text-balance text-center mb-10">
         In
         <span className="inline-block mx-2">
