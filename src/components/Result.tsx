@@ -1,56 +1,115 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { Calculator } from "./Calculator"
+import { formatMoney } from "./Form"
 
-interface Inflation {
-  date: string
+interface Data {
+  date: number
   value: number
 }
 
-function Chart({ inflationHistory }: { inflationHistory: Inflation[] }) {
-  function Svg() {
-    const width = 1000
-    const height = 200
-    const line = 5
-  
-    function getInflationMaxMin() {
-      const values = inflationHistory.map(({ value }) => value)
-    
-      const inflationMax = Math.max(...values)
-      const inflationMin = Math.min(...values)
-  
-      return { inflationMax, inflationMin }
+type ChartType = "money" | "percentage"
+
+function Chart({ history, valueIcon, type, color }: { history: Data[], valueIcon: React.ReactNode, type: ChartType, color: string }) {
+  const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { left: number, top: number } }>({ show: false, year: 0, value: 0, position: { left: 0, top: 0 } })
+
+  const componentRef = useRef<HTMLDivElement>(null)
+
+  const width = 1000
+  const height = width / 3
+  const line = 7
+
+  const marginBottom = height / 10
+  const roundedRadius = 10
+
+  const pointRadius = line
+
+  function formatIndicatorValue(value: number) {
+    switch (type) {
+      case "money":
+        return formatMoney(value)
+      case "percentage":
+        return (value * 100).toFixed(2) + "%"
     }
-  
-    const { inflationMax, inflationMin } = getInflationMaxMin()
-  
-    function getX(i: number) {
-      return (i / (inflationHistory.length - 1)) * width
-    }
-  
-    function getY(value: number) {
-      const margin = line / 2
-  
-      const interpolation = (value - inflationMin) * ((height - margin * 2) / (inflationMax - inflationMin)) + margin
-  
-      return height - interpolation
-    }
-  
-    return (
-      <svg className="overflow-visible" fill="none" strokeLinejoin="round" strokeLinecap="round" strokeWidth={line} stroke="black" width="100%" viewBox={`0 0 ${width} ${height}`}>
-        <path d={`M ${inflationHistory.map((({ value }, i) => `${getX(i)} ${getY(value)}`)).join(" L ")}`} />
-      </svg>
-    )
   }
 
+  function getHistoryMaxMin() {
+    const values = history.map(({ value }) => value)
+  
+    const historyMax = Math.max(...values)
+    const historyMin = Math.min(...values)
+
+    return { historyMax, historyMin }
+  }
+
+  const { historyMax, historyMin } = getHistoryMaxMin()
+
+  const margin = pointRadius
+
+  function getX(i: number) {
+    return (i / (history.length - 1)) * (width - margin * 2) + margin
+  }
+
+  function getY(value: number) {
+    const interpolation = (value - historyMin) * ((height - margin * 2 - marginBottom) / (historyMax - historyMin)) + margin + marginBottom
+
+    return height - interpolation
+  }
+
+  const historyPositions = useMemo(() => {
+    return history.map((({ value }, i) => ({x: getX(i), y: getY(value)})))
+  }, [history])
+
+  function updateIndicator(e: React.MouseEvent) {
+    const conntainer = componentRef.current
+    if (!conntainer) return
+    const containerRect = conntainer.getBoundingClientRect()
+
+    const svg = conntainer.getElementsByTagName('svg')[0]
+
+    const svgRect = svg.getBoundingClientRect()
+
+    const space = svgRect.width / (history.length - 1)
+    const x = e.clientX - svgRect.left
+
+    const point = Math.round(x / space)
+
+    if (!historyPositions[point] || !history[point]) return
+
+    const position = {
+      left: historyPositions[point].x * (svgRect.width / width) + (svgRect.left - containerRect.left),
+      top: historyPositions[point].y * (svgRect.height / height) + (svgRect.top - containerRect.top)
+    }
+
+    setIndicator({ show: true, year: history[point].date, value: history[point].value, position })
+  }
+
+  const historyD = historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ")
+
   return (
-    <div className="bg-black/5 hover:bg-black/10 transition-colors p-10 rounded-[6px] shadow">
-      <Svg />
+    <div ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full p-[2.5%] mx-auto relative">
+      <svg width="100%" viewBox={`0 0 ${width} ${height}`}>
+        <path fill={color} opacity={0.15} d={`M ${historyD} L ${width - margin} ${height - roundedRadius} Q ${width - margin} ${height}, ${width - margin - roundedRadius} ${height} L ${margin + roundedRadius} ${height} Q ${margin} ${height} ,${margin} ${height - roundedRadius} L ${margin} ${getY(history[0].value)}`} />
+        <path fill="none" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
+        <g>
+          {historyPositions.map(({ x, y }, i) => <circle key={i} cx={x} cy={y} fill={color} r={pointRadius} />)}
+        </g>
+      </svg>
+
+      <div style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.left}px, ${indicator.position.top}px)` }} className="absolute top-0 left-0 bg-white transition rounded-[6px] shadow p-2 pointer-events-none z-10">
+        <div className="opacity-75 text-lg font-bold">
+          {indicator.year}
+        </div>
+        <div>
+          {valueIcon}
+          {formatIndicatorValue(indicator.value)}
+        </div>
+      </div>
     </div>
   )
 }
 
 export default function Result({ calculator }: { calculator: Calculator }) {
-  const [inflationHistory, setInflationHistory] = useState<Inflation[]>([])
+  const [inflationHistory, setInflationHistory] = useState<Data[]>([])
   const [loading, setLoading] = useState(false)
 
   const { date, money, country } = calculator
@@ -65,18 +124,34 @@ export default function Result({ calculator }: { calculator: Calculator }) {
     setLoading(true)
     ;(async () => {
       const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${date.getFullYear()}:${now.getFullYear()}&format=json`)
-      const inflationHistory = (await json.json() as [undefined, Inflation[]])[1].toReversed()
+      const inflationHistory = (await json.json() as [undefined, Data[]])[1].map(({ date, value }) => ({ date: Number(date), value: value / 100 })).toReversed()
 
       setInflationHistory(inflationHistory)
     })()
     setLoading(false)
   }, [date?.getTime(), money, country])
 
-  if (noCalculator) return
+  const valueHistory = useMemo(() => {
+    if (noCalculator) return
+
+    const valueHistory: Data[] = []
+
+    valueHistory.push({ date: now.getFullYear(), value: money })
+    inflationHistory.toReversed().forEach(({ date, value: inflation }) => {
+      const previousValue = valueHistory[valueHistory.length - 1]?.value ?? money
+
+      valueHistory.push({ date, value: previousValue / (1 - inflation) })
+    })
+
+    return valueHistory.toReversed()
+  }, [inflationHistory])
+
+  if (noCalculator || !valueHistory) return
 
   return (
-    <div className="mt-15">
-      <Chart inflationHistory={inflationHistory} />
+    <div className="mt-20 grid grid-cols-2 gap-8">
+      <Chart color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory} />
+      <Chart color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory} />
     </div>
   )
 }

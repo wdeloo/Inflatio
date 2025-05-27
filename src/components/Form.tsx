@@ -57,13 +57,21 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
         </span>
         {country.name}
       </button>
-      <div style={{ display: isOpen ? '' : 'none' }} className="max-h-80 overflow-y-auto absolute top-[calc(100%+var(--spacing)*2)] left-0 bg-white rounded-[6px] min-w-full w-max max-w-70 shadow">
+      <div style={{ display: isOpen ? '' : 'none' }} className="max-h-80 overflow-y-auto absolute z-20 top-[calc(100%+var(--spacing)*2)] left-0 bg-white rounded-[6px] min-w-full w-max max-w-70 shadow">
         <ul className="bg-black/5 w-full h-full p-0.5">
           {countries}
         </ul>
       </div>
     </div>
   )
+}
+
+export function formatMoney(money: number) {
+  if (isNaN(money)) return ""
+
+  money = Number(Math.round(money).toString().slice(0, 14))
+
+  return money.toLocaleString()
 }
 
 function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.SetStateAction<number>>] }) {
@@ -76,14 +84,6 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
     const money = value.replace(/[^0-9]/g, "")
 
     setMoney(Number(money) || NaN)
-  }
-
-  function formatMoney(money: number) {
-    if (isNaN(money)) return ""
-
-    money = Number(money.toString().slice(0, 14))
-
-    return money.toLocaleString()
   }
 
   function focusInput() {
@@ -157,7 +157,7 @@ function DateInput({ dateState }: { dateState: [Date | null, React.Dispatch<Reac
         </span>
         {date ? <span>{getMonthName(date.getMonth()).slice(0, 3)}, {date.getFullYear()}</span> : <span className="text-black/50">{getMonthName(before.getMonth()).slice(0, 3)}, {before.getFullYear()}</span>}
       </button>
-      <div style={{ display: isOpen ? '' : 'none' }} className="absolute top-[calc(100%+var(--spacing)*2)] select-none left-1/2 bg-white -translate-x-1/2 rounded-[6px] w-max shadow">
+      <div style={{ display: isOpen ? '' : 'none' }} className="absolute top-[calc(100%+var(--spacing)*2)] select-none left-1/2 z-20 bg-white -translate-x-1/2 rounded-[6px] w-max shadow">
         <div className="bg-black/5 w-full h-full p-0.5">
           <div className="flex flex-row justify-center items-stretch my-1 text-xl gap-1">
             <button onClick={decreaseYear} type="button" className="content-center px-2 group cursor-pointer">
@@ -214,7 +214,7 @@ export default function Form({ setCalculator }: { setCalculator: Dispatch<SetSta
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col items-center z-10">
+    <form onSubmit={submit} className="flex flex-col items-center">
       <div className="text-2xl font-medium text-balance text-center mb-10">
         In
         <span className="inline-block mx-2">
