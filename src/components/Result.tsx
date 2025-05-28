@@ -8,11 +8,14 @@ interface Data {
 }
 
 type ChartType = "money" | "percentage"
+type IndicatorDirection = "right" | "left"
 
-function Chart({ history, valueIcon, type, color }: { history: Data[], valueIcon: React.ReactNode, type: ChartType, color: string }) {
-  const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { left: number, top: number } }>({ show: false, year: 0, value: 0, position: { left: 0, top: 0 } })
+function Chart({ history, valueIcon, type, color, indicatorDirection }: { history: Data[], valueIcon: React.ReactNode, type: ChartType, color: string, indicatorDirection: IndicatorDirection }) {
+  const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { x: number, y: number } }>({ show: false, year: 0, value: 0, position: { x: 0, y: 0 } })
 
   const componentRef = useRef<HTMLDivElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const indicatorRef = useRef<HTMLDivElement>(null)
 
   const width = 1000
   const height = width / 3
@@ -60,11 +63,14 @@ function Chart({ history, valueIcon, type, color }: { history: Data[], valueIcon
   }, [history])
 
   function updateIndicator(e: React.MouseEvent) {
-    const conntainer = componentRef.current
-    if (!conntainer) return
-    const containerRect = conntainer.getBoundingClientRect()
+    const container = componentRef.current
+    if (!container) return
 
-    const svg = conntainer.getElementsByTagName('svg')[0]
+    const svg = svgRef.current
+    if (!svg) return
+
+    const indicator = indicatorRef.current
+    if (!indicator) return
 
     const svgRect = svg.getBoundingClientRect()
 
@@ -75,9 +81,12 @@ function Chart({ history, valueIcon, type, color }: { history: Data[], valueIcon
 
     if (!historyPositions[point] || !history[point]) return
 
+    const containerRect = container.getBoundingClientRect()
+    const indicatorRect = indicator.getBoundingClientRect()
+
     const position = {
-      left: historyPositions[point].x * (svgRect.width / width) + (svgRect.left - containerRect.left),
-      top: historyPositions[point].y * (svgRect.height / height) + (svgRect.top - containerRect.top)
+      x: historyPositions[point].x * (svgRect.width / width) + (svgRect.left - containerRect.left) - (indicatorDirection === "left" ? indicatorRect.width : 0),
+      y: historyPositions[point].y * (svgRect.height / height) + (svgRect.top - containerRect.top)
     }
 
     setIndicator({ show: true, year: history[point].date, value: history[point].value, position })
@@ -87,15 +96,15 @@ function Chart({ history, valueIcon, type, color }: { history: Data[], valueIcon
 
   return (
     <div ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full p-[2.5%] mx-auto relative">
-      <svg width="100%" viewBox={`0 0 ${width} ${height}`}>
+      <svg ref={svgRef} width="100%" viewBox={`0 0 ${width} ${height}`}>
         <path fill={color} opacity={0.15} d={`M ${historyD} L ${width - margin} ${height - roundedRadius} Q ${width - margin} ${height}, ${width - margin - roundedRadius} ${height} L ${margin + roundedRadius} ${height} Q ${margin} ${height} ,${margin} ${height - roundedRadius} L ${margin} ${getY(history[0].value)}`} />
-        <path fill="none" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
+        <path fill="none" strokeLinejoin="round" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
         <g>
           {historyPositions.map(({ x, y }, i) => <circle key={i} cx={x} cy={y} fill={color} r={pointRadius} />)}
         </g>
       </svg>
 
-      <div style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.left}px, ${indicator.position.top}px)` }} className="absolute top-0 left-0 bg-white transition rounded-[6px] shadow p-2 pointer-events-none z-10">
+      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white transition shadow p-2 pointer-events-none z-10">
         <div className="opacity-75 text-lg font-bold">
           {indicator.year}
         </div>
@@ -150,8 +159,8 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
   return (
     <div className="mt-20 grid grid-cols-2 gap-8">
-      <Chart color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory} />
-      <Chart color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory} />
+      <Chart indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory} />
+      <Chart indicatorDirection="left" color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory} />
     </div>
   )
 }
