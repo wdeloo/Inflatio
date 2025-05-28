@@ -49,10 +49,14 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   const margin = pointRadius
 
   function getX(i: number) {
+    if (history.length === 1) return width / 2
+
     return (i / (history.length - 1)) * (width - margin * 2) + margin
   }
 
   function getY(value: number) {
+    if (history.length === 1) return height / 2
+
     const interpolation = (value - historyMin) * ((height - margin * 2 - marginBottom) / (historyMax - historyMin)) + margin + marginBottom
 
     return height - interpolation
@@ -92,7 +96,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
     setIndicator({ show: true, year: history[point].date, value: history[point].value, position })
   }
 
-  const historyD = historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ")
+  const historyD = (history.length === 1 ? `${margin} ${historyPositions[0].y} L ` : "") + historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ") + (history.length === 1 ? ` L ${width - margin} ${historyPositions[0].y}` : "")
 
   return (
     <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full p-[2.5%] mx-auto relative flex flex-col justify-between">
@@ -102,7 +106,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
 
       <svg ref={svgRef} width="100%" viewBox={`0 0 ${width} ${height}`}>
         <path fill={color} opacity={0.15} d={`M ${historyD} L ${width - margin} ${height - roundedRadius} Q ${width - margin} ${height}, ${width - margin - roundedRadius} ${height} L ${margin + roundedRadius} ${height} Q ${margin} ${height} ,${margin} ${height - roundedRadius} L ${margin} ${getY(history[0].value)}`} />
-        <path fill="none" strokeLinejoin="round" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
+        <path fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
         <g>
           {historyPositions.map(({ x, y }, i) => <circle key={i} cx={x} cy={y} fill={color} r={pointRadius} />)}
         </g>
