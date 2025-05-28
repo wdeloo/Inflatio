@@ -10,7 +10,7 @@ interface Data {
 type ChartType = "money" | "percentage"
 type IndicatorDirection = "right" | "left"
 
-function Chart({ history, valueIcon, type, color, indicatorDirection }: { history: Data[], valueIcon: React.ReactNode, type: ChartType, color: string, indicatorDirection: IndicatorDirection }) {
+function Chart({ history, valueIcon, type, color, indicatorDirection, children }: { history: Data[], valueIcon: React.ReactNode, type: ChartType, color: string, indicatorDirection: IndicatorDirection, children: React.ReactNode }) {
   const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { x: number, y: number } }>({ show: false, year: 0, value: 0, position: { x: 0, y: 0 } })
 
   const componentRef = useRef<HTMLDivElement>(null)
@@ -95,7 +95,11 @@ function Chart({ history, valueIcon, type, color, indicatorDirection }: { histor
   const historyD = historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ")
 
   return (
-    <div ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full p-[2.5%] mx-auto relative">
+    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full p-[2.5%] mx-auto relative flex flex-col justify-between">
+      <header className="mb-5 select-none">
+        {children}
+      </header>
+
       <svg ref={svgRef} width="100%" viewBox={`0 0 ${width} ${height}`}>
         <path fill={color} opacity={0.15} d={`M ${historyD} L ${width - margin} ${height - roundedRadius} Q ${width - margin} ${height}, ${width - margin - roundedRadius} ${height} L ${margin + roundedRadius} ${height} Q ${margin} ${height} ,${margin} ${height - roundedRadius} L ${margin} ${getY(history[0].value)}`} />
         <path fill="none" strokeLinejoin="round" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
@@ -105,7 +109,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection }: { histor
       </svg>
 
       <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white transition shadow p-2 pointer-events-none z-10">
-        <div className="opacity-75 text-lg font-bold">
+        <div className="text-black/75 text-lg font-bold">
           {indicator.year}
         </div>
         <div>
@@ -113,7 +117,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection }: { histor
           {formatIndicatorValue(indicator.value)}
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
@@ -149,7 +153,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
     inflationHistory.toReversed().forEach(({ date, value: inflation }) => {
       const previousValue = valueHistory[valueHistory.length - 1]?.value ?? money
 
-      valueHistory.push({ date, value: previousValue / (1 - inflation) })
+      valueHistory.push({ date, value: previousValue * (1 + inflation) })
     })
 
     return valueHistory.toReversed()
@@ -158,9 +162,25 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   if (noCalculator || !valueHistory) return
 
   return (
-    <div className="mt-20 grid grid-cols-2 gap-8">
-      <Chart indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory} />
-      <Chart indicatorDirection="left" color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory} />
+    <div className="mt-20 flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-6">
+        <Chart indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory}>
+          <h2 className="text-xl font-semibold text-center">
+            Annual <strong className="text-[darkorange] text-shadow-sm font-semibold">Inflation Rate</strong>
+          </h2>
+          <p className="text-sm text-black/75 text-center font-semibold pt-1.5">
+          Based on Year-End Data
+        </p>
+        </Chart>
+        <Chart indicatorDirection="left" color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory}>
+          <h2 className="text-xl font-semibold text-center">
+            <strong className="text-[red] text-shadow-sm font-semibold">Purchasing Power</strong> by year
+          </h2>
+          <p className="text-sm text-black/75 text-center font-semibold pt-1.5">
+            Adjusted to Present-Day Value
+          </p>
+        </Chart>
+      </div>
     </div>
   )
 }
