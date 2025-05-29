@@ -112,7 +112,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
         </g>
       </svg>
 
-      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white transition ease-linear shadow p-2 pointer-events-none z-10">
+      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white select-none transition ease-linear shadow p-2 pointer-events-none z-10">
         <div className="text-black/75 text-lg font-bold">
           {indicator.year}
         </div>
