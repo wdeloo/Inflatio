@@ -7,10 +7,27 @@ interface Data {
   value: number
 }
 
-type ChartType = "money" | "percentage"
+type ValueType = "money" | "percentage"
 type IndicatorDirection = "right" | "left"
 
-function Chart({ history, valueIcon, type, color, indicatorDirection, children }: { history: Data[], valueIcon: React.ReactNode, type: ChartType, color: string, indicatorDirection: IndicatorDirection, children: React.ReactNode }) {
+function SubTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-sm text-black/75 text-center font-semibold pt-1.5">
+      {children}
+    </p>
+  )
+}
+
+function formatValue(value: number, type: ValueType) {
+  switch (type) {
+    case "money":
+      return formatMoney(value)
+    case "percentage":
+      return (value * 100).toFixed(2) + "%"
+  }
+}
+
+function Chart({ history, valueIcon, type, color, indicatorDirection, children }: { history: Data[], valueIcon: React.ReactNode, type: ValueType, color: string, indicatorDirection: IndicatorDirection, children: React.ReactNode }) {
   const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { x: number, y: number } }>({ show: false, year: 0, value: 0, position: { x: 0, y: 0 } })
 
   const componentRef = useRef<HTMLDivElement>(null)
@@ -25,15 +42,6 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   const roundedRadius = 10
 
   const pointRadius = line
-
-  function formatIndicatorValue(value: number) {
-    switch (type) {
-      case "money":
-        return formatMoney(value)
-      case "percentage":
-        return (value * 100).toFixed(2) + "%"
-    }
-  }
 
   function getHistoryMaxMin() {
     const values = history.map(({ value }) => value)
@@ -99,7 +107,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   const historyD = (history.length === 1 ? `${margin} ${historyPositions[0].y} L ` : "") + historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ") + (history.length === 1 ? ` L ${width - margin} ${historyPositions[0].y}` : "")
 
   return (
-    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full p-[2.5%] mx-auto relative flex flex-col justify-between">
+    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full py-3 px-2.5 mx-auto relative flex flex-col justify-between">
       <header className="mb-5 select-none">
         {children}
       </header>
@@ -118,8 +126,29 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
         </div>
         <div>
           {valueIcon}
-          {formatIndicatorValue(indicator.value)}
+          {formatValue(indicator.value, type)}
         </div>
+      </div>
+    </article>
+  )
+}
+
+function Lost({ children, values }: { children: React.ReactNode, values: { value: number, type: ValueType, label: string, average?: boolean }[] }) {
+  return (
+    <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow">
+      <header className="mb-8 select-none">
+        {children}
+      </header>
+
+      <div style={{ gridTemplateColumns: `repeat(${values.length}, 1fr)` }} className="grid select-none">
+        {values.map(({ value, type, label, average }, i) => (
+          <div className="flex flex-col items-center" key={i}>
+            <h3 className="text-2xl font-bold text-[red] text-shadow-sm">{type === "money" ? "$" : null}{formatValue(value, type)}{average ? "/year" : null}</h3>
+            <SubTitle>
+              {label}
+            </SubTitle>
+          </div>
+        ))}
       </div>
     </article>
   )
@@ -165,6 +194,8 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
   if (noCalculator || !valueHistory) return
 
+  const valueDifference = valueHistory[0].value - valueHistory[valueHistory.length - 1].value
+
   return (
     <div className="mt-20 flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-6">
@@ -172,18 +203,32 @@ export default function Result({ calculator }: { calculator: Calculator }) {
           <h2 className="text-xl font-semibold text-center">
             Annual <strong className="text-[darkorange] text-shadow-sm font-semibold">Inflation Rate</strong>
           </h2>
-          <p className="text-sm text-black/75 text-center font-semibold pt-1.5">
-          Based on Year-End Data
-        </p>
+          <SubTitle>
+            Based on Year-End Data
+          </SubTitle>
         </Chart>
         <Chart indicatorDirection="left" color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory}>
           <h2 className="text-xl font-semibold text-center">
             <strong className="text-[red] text-shadow-sm font-semibold">Purchasing Power</strong> by year
           </h2>
-          <p className="text-sm text-black/75 text-center font-semibold pt-1.5">
+          <SubTitle>
             Adjusted to Present-Day Value
-          </p>
+          </SubTitle>
         </Chart>
+      </div>
+      <div>
+        <Lost values={[
+          { value: valueDifference / valueHistory[0].value, type: "percentage", label: "Of Your Value" },
+          { value: valueDifference, type: "money", label: "In Present-Day Value" },
+          { value: valueDifference / inflationHistory.length, type: "money", label: "Average in Present-Day Value", average: true },
+        ]}>
+          <h2 className="text-xl font-semibold text-center">
+            You Have <strong className="text-[red] text-shadow-sm font-semibold">Lost</strong>
+          </h2>
+          <SubTitle>
+            Due to Inflation
+          </SubTitle>
+        </Lost>
       </div>
     </div>
   )
