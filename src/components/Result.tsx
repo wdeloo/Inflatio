@@ -199,7 +199,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   return (
     <section className="mt-20 flex flex-col gap-6">
       <header className="bg-black/5 cursor-default hover:bg-black/10 transition-colors rounded-[6px] shadow w-full p-3">
-        <h1 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{year}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${formatMoney(valueHistory[0].value)}</span></h1>
+        <h1 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{year}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${formatMoney(valueHistory[0].value)}</span>.</h1>
       </header>
 
       <div className="grid grid-cols-2 gap-6">
