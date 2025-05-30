@@ -105,7 +105,7 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
   )
 }
 
-function DateInput({ yearState }: { yearState: [number, React.Dispatch<React.SetStateAction<number>>] }) {
+function YearInput({ yearState }: { yearState: [number, React.Dispatch<React.SetStateAction<number>>] }) {
   const MIN_YEAR = 1960
   const MAX_YEAR_DIFF = 1
 
@@ -168,8 +168,12 @@ export default function Form({ setCalculator }: { setCalculator: Dispatch<SetSta
     setCalculator({ country, money, year })
   }
 
+  function preventEnter(e: React.KeyboardEvent) {
+    if (e.key === "Enter") e.preventDefault()
+  }
+
   return (
-    <form onSubmit={submit} className="flex flex-col items-center">
+    <form onKeyDown={preventEnter} onSubmit={submit} className="flex flex-col items-center">
       <div className="text-2xl font-medium text-balance text-center mb-10">
         In
         <span className="inline-block mx-2">
@@ -181,7 +185,7 @@ export default function Form({ setCalculator }: { setCalculator: Dispatch<SetSta
         </span>
         in the bank since
         <span className="inline-block mx-2">
-          <DateInput yearState={[year, setYear]} />
+          <YearInput yearState={[year, setYear]} />
         </span>
         .
       </div>
