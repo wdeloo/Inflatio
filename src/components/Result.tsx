@@ -107,8 +107,8 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   const historyD = (history.length === 1 ? `${margin} ${historyPositions[0].y} L ` : "") + historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ") + (history.length === 1 ? ` L ${width - margin} ${historyPositions[0].y}` : "")
 
   return (
-    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow w-full py-3 px-2.5 relative flex flex-col justify-between">
-      <header className="mb-5 select-none">
+    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 cursor-default transition-colors overflow-visible rounded-[6px] shadow w-full py-3 px-2.5 relative flex flex-col justify-between">
+      <header className="mb-5">
         {children}
       </header>
 
@@ -120,7 +120,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
         </g>
       </svg>
 
-      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white select-none transition ease-linear shadow p-2 pointer-events-none z-10">
+      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white transition ease-linear shadow p-2 pointer-events-none z-10">
         <div className="text-black/75 text-lg font-bold">
           {indicator.year}
         </div>
@@ -135,12 +135,12 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
 
 function Lost({ children, values }: { children: React.ReactNode, values: { value: number, type: ValueType, label: string, average?: boolean }[] }) {
   return (
-    <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow">
-      <header className="mb-8 select-none">
+    <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow cursor-default">
+      <header className="mb-8">
         {children}
       </header>
 
-      <div style={{ gridTemplateColumns: `repeat(${values.length}, 1fr)` }} className="grid select-none">
+      <div style={{ gridTemplateColumns: `repeat(${values.length}, 1fr)` }} className="grid">
         {values.map(({ value, type, label, average }, i) => (
           <div className="flex flex-col items-center" key={i}>
             <h3 className="text-2xl font-bold text-[red] text-shadow-sm">{type === "money" ? "$" : null}{formatValue(value, type)}{average ? "/year" : null}</h3>
