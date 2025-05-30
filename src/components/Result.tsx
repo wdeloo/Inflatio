@@ -107,7 +107,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   const historyD = (history.length === 1 ? `${margin} ${historyPositions[0].y} L ` : "") + historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ") + (history.length === 1 ? ` L ${width - margin} ${historyPositions[0].y}` : "")
 
   return (
-    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow max-w-[770px] w-full py-3 px-2.5 mx-auto relative flex flex-col justify-between">
+    <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 transition-colors overflow-visible rounded-[6px] shadow w-full py-3 px-2.5 relative flex flex-col justify-between">
       <header className="mb-5 select-none">
         {children}
       </header>
@@ -197,7 +197,11 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   const valueDifference = valueHistory[0].value - valueHistory[valueHistory.length - 1].value
 
   return (
-    <div className="mt-20 flex flex-col gap-6">
+    <section className="mt-20 flex flex-col gap-6">
+      <header className="bg-black/5 cursor-default hover:bg-black/10 transition-colors rounded-[6px] shadow w-full p-3">
+        <h1 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{date.getFullYear()}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${formatMoney(valueHistory[0].value)}</span></h1>
+      </header>
+
       <div className="grid grid-cols-2 gap-6">
         <Chart indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory}>
           <h2 className="text-xl font-semibold text-center">
@@ -216,6 +220,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
           </SubTitle>
         </Chart>
       </div>
+
       <div>
         <Lost values={[
           { value: valueDifference / valueHistory[0].value, type: "percentage", label: "Of Your Value" },
@@ -230,6 +235,6 @@ export default function Result({ calculator }: { calculator: Calculator }) {
           </SubTitle>
         </Lost>
       </div>
-    </div>
+    </section>
   )
 }
