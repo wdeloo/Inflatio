@@ -158,9 +158,9 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   const [inflationHistory, setInflationHistory] = useState<Data[]>([])
   const [loading, setLoading] = useState(false)
 
-  const { date, money, country } = calculator
+  const { year, money, country } = calculator
 
-  const noCalculator = !date || !money || !country
+  const noCalculator = !year || !money || !country
 
   const now = new Date()
 
@@ -169,13 +169,13 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
     setLoading(true)
     ;(async () => {
-      const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${date.getFullYear()}:${now.getFullYear()}&format=json`)
+      const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${year}:${now.getFullYear()}&format=json`)
       const inflationHistory = (await json.json() as [undefined, Data[]])[1].map(({ date, value }) => ({ date: Number(date), value: value / 100 })).toReversed()
 
       setInflationHistory(inflationHistory)
     })()
     setLoading(false)
-  }, [date?.getTime(), money, country])
+  }, [year, money, country])
 
   const valueHistory = useMemo(() => {
     if (noCalculator) return
@@ -199,7 +199,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   return (
     <section className="mt-20 flex flex-col gap-6">
       <header className="bg-black/5 cursor-default hover:bg-black/10 transition-colors rounded-[6px] shadow w-full p-3">
-        <h1 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{date.getFullYear()}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${formatMoney(valueHistory[0].value)}</span></h1>
+        <h1 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{year}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${formatMoney(valueHistory[0].value)}</span></h1>
       </header>
 
       <div className="grid grid-cols-2 gap-6">

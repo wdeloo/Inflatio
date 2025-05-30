@@ -105,96 +105,51 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
   )
 }
 
-function DateInput({ dateState }: { dateState: [Date | null, React.Dispatch<React.SetStateAction<Date | null>>] }) {
+function DateInput({ yearState }: { yearState: [number, React.Dispatch<React.SetStateAction<number>>] }) {
+  const MIN_YEAR = 1960
+  const MAX_YEAR_DIFF = 1
+
   const now = new Date()
   const before = new Date(now)
   before.setFullYear(before.getFullYear() - 20)
 
-  const [isOpen, setOpen] = useState(false)
-  const [year, setYear] = useState(before.getFullYear())
-  const [date, setDate] = dateState
+  const [year, setYear] = yearState
 
-  const componentRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    function closeCode(e: MouseEvent) {
-      const component = componentRef.current
-      if (!component) return
+  function updateInput(e: React.ChangeEvent) {
+    const value = (e.currentTarget as HTMLInputElement).value
+    const year = value.replace(/[^0-9]/g, "")
 
-      if (component.children[0].contains(e.target as HTMLElement)) return
-      if (component.children[1].contains(e.target as HTMLElement)) return
-
-      setOpen(false)
-    }
-
-    document.addEventListener("mousedown", closeCode)
-
-    return () => document.removeEventListener("mousedown", closeCode)
-  }, [])
-
-  function decreaseYear() {
-    setYear(prev => Math.max(1960, prev - 1))
+    setYear(Number(year) || NaN)
   }
 
-  function increaseYear() {
-    setYear(prev => Math.min(now.getFullYear() - 1, prev + 1))
+  function focusInput() {
+    const input = inputRef.current
+
+    input?.focus()
   }
 
-  function getMonthName(month: number) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    return months[month] ?? '';
+  function formatYear(year: number) {
+    if (isNaN(year)) return ""
+    return year
+  }
+
+  function updateInputLegal() {
+    setYear(prev => {
+      if (isNaN(prev)) return NaN
+      return Math.max(Math.min(prev, now.getFullYear() - MAX_YEAR_DIFF), MIN_YEAR)
+    })
   }
 
   return (
-    <div className="relative" ref={componentRef}>
-      <button type="button" className="flex flex-row text-xl gap-1.5 font-normal items-center cursor-pointer rounded-[6px] hover:bg-black/10 focus-within:bg-black/10 transition-colors p-2 py-1.5" onClick={() => setOpen(prev => !prev)}>
-        <span className="emoji select-none text-2xl">
-          📆
-        </span>
-        {date ? <span>{getMonthName(date.getMonth()).slice(0, 3)}, {date.getFullYear()}</span> : <span className="text-black/50">{getMonthName(before.getMonth()).slice(0, 3)}, {before.getFullYear()}</span>}
-      </button>
-      <div style={{ display: isOpen ? '' : 'none' }} className="absolute top-[calc(100%+var(--spacing)*2)] select-none left-1/2 z-20 bg-white -translate-x-1/2 rounded-[6px] w-max shadow">
-        <div className="bg-black/5 w-full h-full p-0.5">
-          <div className="flex flex-row justify-center items-stretch my-1 text-xl gap-1">
-            <button onClick={decreaseYear} type="button" className="content-center px-2 group cursor-pointer">
-              <svg fill="none" className="stroke-black/50 group-hover:stroke-black transition-colors" strokeLinecap="round" strokeWidth={2} strokeLinejoin="round" viewBox="0 0 7 10" height={15}>
-                <path d="M 5 2 L 2 5 L 5 8" />
-              </svg>
-            </button>
-            <div className="w-[4ch] text-center tracking-tight">
-              {year}
-            </div>
-            <button onClick={increaseYear} type="button" className="content-center px-2 group cursor-pointer">
-              <svg fill="none" className="stroke-black/50 group-hover:stroke-black transition-colors" strokeLinecap="round" strokeWidth={2} strokeLinejoin="round" viewBox="0 0 7 10" height={15}>
-                <path d="M 2 2 L 5 5 L 2 8" />
-              </svg>
-            </button>
-          </div>
-          <ul className="grid grid-cols-3 text-base font-normal">
-            {Array.from({ length: 12 }).map((_, i) => {
-              function updateDate() {
-                const date = new Date()
-                date.setFullYear(year)
-                date.setMonth(i)
-
-                setDate(date)
-                setOpen(false)
-              }
-
-              return (
-                <li key={i}>
-                  <button onClick={updateDate} type="button" className="hover:bg-black/10 rounded-[6px] cursor-pointer w-full text-left transition-colors py-0.5 px-1.5">
-                    {getMonthName(i)}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+    <div onClick={focusInput} className="flex flex-row items-stretch cursor-text rounded-[6px] text-2xl hover:bg-black/10 focus-within:bg-black/10 transition-colors pl-1.5 pr-2 py-1.5">
+      <span className="emoji select-none text-2xl mr-1.5">
+        📆
+      </span>
+      <div className="relative w-fit min-w-12.25">
+        <span className="font-normal text-xl opacity-0 h-full block">{year}</span>
+        <input ref={inputRef} onBlur={updateInputLegal} value={formatYear(year)} onChange={updateInput} type="text" placeholder={before.getFullYear().toString()} className="outline-none placeholder:text-black/50 group font-normal text-xl w-full absolute left-0 top-1/2 -translate-y-1/2" />
       </div>
     </div>
   )
@@ -203,14 +158,14 @@ function DateInput({ dateState }: { dateState: [Date | null, React.Dispatch<Reac
 export default function Form({ setCalculator }: { setCalculator: Dispatch<SetStateAction<Calculator>> }) {
   const [country, setCountry] = useState<TCountryCode>("US")
   const [money, setMoney] = useState<number>(NaN)
-  const [date, setDate] = useState<Date | null>(null)
+  const [year, setYear] = useState<number>(NaN)
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!country || !money || !date) return
+    if (!country || !money || !year) return
 
-    setCalculator({ country, money, date })
+    setCalculator({ country, money, year })
   }
 
   return (
@@ -226,7 +181,7 @@ export default function Form({ setCalculator }: { setCalculator: Dispatch<SetSta
         </span>
         in the bank since
         <span className="inline-block mx-2">
-          <DateInput dateState={[date, setDate]} />
+          <DateInput yearState={[year, setYear]} />
         </span>
         .
       </div>

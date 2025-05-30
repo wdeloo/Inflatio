@@ -6,11 +6,11 @@ import Form from "./Form";
 export interface Calculator {
   country: TCountryCode
   money: number
-  date: Date | null
+  year: number
 }
 
 export default function Calculator() {
-  const [calculator, setCalculator] = useState<Calculator>({ country: "US", money: NaN, date: null })
+  const [calculator, setCalculator] = useState<Calculator>({ country: "US", money: NaN, year: NaN })
 
   return (
     <section>
