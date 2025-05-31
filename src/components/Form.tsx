@@ -182,7 +182,7 @@ function YearInput({ yearState }: { yearState: [number, React.Dispatch<React.Set
         📆
       </span>
       <div className="relative w-fit min-w-12.25">
-        <span className="font-normal text-xl opacity-0 h-full block">{year}</span>
+        <span className="font-normal text-xl opacity-0 h-full block">{formatYear(year)}</span>
         <input ref={inputRef} onBlur={updateInputLegal} value={formatYear(year)} onChange={updateInput} type="text" placeholder={before.getFullYear().toString()} className="outline-none placeholder:text-black/50 group font-normal text-xl w-full absolute left-0 top-1/2 -translate-y-1/2" />
       </div>
     </div>
