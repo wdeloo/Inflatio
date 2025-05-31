@@ -133,14 +133,6 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   )
 }
 
-function Equivalent({ year, value }: { year: number, value: string }) {
-  return (
-    <article className="bg-black/5 cursor-default hover:bg-black/10 transition-colors rounded-[6px] shadow w-full p-3">
-      <h2 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{year}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${value}</span>.</h2>
-    </article>
-  )
-}
-
 function Statistics({ children, values, color }: { children: React.ReactNode, values: { value: number, type: ValueType, label: string, average?: boolean }[], color: string }) {
   return (
     <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow cursor-default">
