@@ -46,10 +46,11 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
 
   const country = getCountryData(code)
 
-  const lookfor = new LookFor({ tag: "h" }, { detectAccents: false, keySensitive: false })
-
+  
   const countries = useMemo(() => {
     const countryList = getCountryDataList()
+
+    const lookfor = new LookFor({ tag: "h" }, { detectAccents: false, keySensitive: false })
 
     return countryList.map((country, i) => {
 
