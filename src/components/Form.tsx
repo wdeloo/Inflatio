@@ -2,12 +2,15 @@ import { getCountryData, getCountryDataList, type TCountryCode } from "countries
 import countryCodeToFlagEmoji from "country-code-to-flag-emoji";
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { type Calculator } from "./Calculator";
+import LookFor from "lookfor-js";
 
 function CountriesInput({ countryState }: { countryState: [TCountryCode, React.Dispatch<React.SetStateAction<TCountryCode>>] }) {
   const [isOpen, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
   const [code, setCode] = countryState
 
   const componentRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     function closeCode(e: MouseEvent) {
@@ -25,15 +28,39 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
     return () => document.removeEventListener("mousedown", closeCode)
   }, [])
 
+  useEffect(() => {
+    if (isOpen) focusSearch()
+  }, [isOpen])
+
+  function focusSearch() {
+    const search = searchRef.current
+
+    search?.focus()
+  }
+
+  function handleSearch(e: React.ChangeEvent) {
+    const search = e.currentTarget as HTMLInputElement
+
+    setSearch(search.value)
+  }
+
   const country = getCountryData(code)
+
+  const lookfor = new LookFor({ tag: "h" }, { detectAccents: false, keySensitive: false })
 
   const countries = useMemo(() => {
     const countryList = getCountryDataList()
 
     return countryList.map((country, i) => {
+
       function updateCountry() {
         setCode(country.iso2)
         setOpen(false)
+      }
+
+      if (search) {
+        const highlightedCountry = lookfor.highlight(country.name, search)
+        if (highlightedCountry.length === country.name.length) return
       }
 
       return (
@@ -47,7 +74,7 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
         </li>
       )
     })
-  }, [])
+  }, [search])
 
   return (
     <div className="w-fit text-base font-normal relative" ref={componentRef}>
@@ -57,10 +84,16 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
         </span>
         {country.name}
       </button>
-      <div style={{ display: isOpen ? '' : 'none' }} className="max-h-80 overflow-y-auto absolute z-20 top-[calc(100%+var(--spacing)*2)] left-0 bg-white rounded-[6px] min-w-full w-max max-w-70 shadow">
-        <ul className="bg-black/5 w-full h-full p-0.5">
-          {countries}
-        </ul>
+      <div style={{ display: isOpen ? '' : 'none' }} className="absolute z-20 top-[calc(100%+var(--spacing)*2)] left-0 bg-white rounded-[6px] min-w-full w-max max-w-70 shadow overflow-hidden">
+        <div className="bg-black/5 p-0.5">
+          <search onClick={focusSearch} className="mb-0.5 flex cursor-text flex-row bg-black/10 rounded-[6px] w-full px-1.5 py-0.5 gap-1.5">
+            <img src="images/search.svg" width={24.9} className="scale-110" />
+            <input value={search} onChange={handleSearch} ref={searchRef} type="text" className="outline-none" />
+          </search>
+          <ul className="w-full h-full max-h-72 overflow-y-auto">
+            {countries}
+          </ul>
+        </div>
       </div>
     </div>
   )
