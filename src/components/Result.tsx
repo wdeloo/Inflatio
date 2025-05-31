@@ -133,6 +133,14 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   )
 }
 
+function Equivalent({ year, value }: { year: number, value: string }) {
+  return (
+    <article className="bg-black/5 cursor-default hover:bg-black/10 transition-colors rounded-[6px] shadow w-full p-3">
+      <h2 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{year}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${value}</span>.</h2>
+    </article>
+  )
+}
+
 function Lost({ children, values }: { children: React.ReactNode, values: { value: number, type: ValueType, label: string, average?: boolean }[] }) {
   return (
     <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow cursor-default">
@@ -198,10 +206,6 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
   return (
     <section className="mt-20 flex flex-col gap-6">
-      <header className="bg-black/5 cursor-default hover:bg-black/10 transition-colors rounded-[6px] shadow w-full p-3">
-        <h1 className="text-xl font-semibold text-center">In <span className="text-shadow-sm text-[darkorange]">{year}</span> you had the equivalent to <span className="text-shadow-sm text-[green]">${formatMoney(valueHistory[0].value)}</span>.</h1>
-      </header>
-
       <div className="grid grid-cols-2 gap-6">
         <Chart indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory}>
           <h2 className="text-xl font-semibold text-center">
@@ -221,20 +225,20 @@ export default function Result({ calculator }: { calculator: Calculator }) {
         </Chart>
       </div>
 
-      <div>
-        <Lost values={[
-          { value: valueDifference / valueHistory[0].value, type: "percentage", label: "Of Your Value" },
-          { value: valueDifference, type: "money", label: "In Present-Day Value" },
-          { value: valueDifference / inflationHistory.length, type: "money", label: "Average in Present-Day Value", average: true },
-        ]}>
-          <h2 className="text-xl font-semibold text-center">
-            You Have <strong className="text-[red] text-shadow-sm font-semibold">Lost</strong>
-          </h2>
-          <SubTitle>
-            Due to Inflation
-          </SubTitle>
-        </Lost>
-      </div>
+      <Equivalent value={formatMoney(valueHistory[0].value)} year={year} />
+
+      <Lost values={[
+        { value: valueDifference / valueHistory[0].value, type: "percentage", label: "Of Your Value" },
+        { value: valueDifference, type: "money", label: "In Present-Day Value" },
+        { value: valueDifference / inflationHistory.length, type: "money", label: "Average in Present-Day Value", average: true },
+      ]}>
+        <h2 className="text-xl font-semibold text-center">
+          You Have <strong className="text-[red] text-shadow-sm font-semibold">Lost</strong>
+        </h2>
+        <SubTitle>
+          Due to Inflation
+        </SubTitle>
+      </Lost>
     </section>
   )
 }
