@@ -278,8 +278,12 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
     ;(async () => {
       setLoading(true)
-      const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${year}:${now.getFullYear()}&format=json`)
-      const jsonObj = (await json.json() as [undefined, Data[]])[1]
+      const jsonObj: Data[] = []
+
+      for (let i = now.getFullYear() - 1; i >= year; i -= 50) {
+        const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${Math.max(i - 49, year)}:${i}&format=json`)
+        jsonObj.push(...(await json.json() as [undefined, Data[]])[1])
+      }
 
       let inflationHistory: Data[]
       const deducedValues: number[] = []
