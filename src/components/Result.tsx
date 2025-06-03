@@ -340,13 +340,15 @@ export default function Result({ calculator }: { calculator: Calculator }) {
     return valueHistory.toReversed()
   }, [inflationHistory])
 
-  if (noCalculator || !valueHistory) return
-
-  const valueDifference = valueHistory[0].value - valueHistory[valueHistory.length - 1].value
+  if (noCalculator) return
 
   if (loading) {
     return <Loading year={year} />
   }
+
+  if (!valueHistory) return
+
+  const valueDifference = valueHistory[0].value - valueHistory[valueHistory.length - 1].value
 
   if (!inflationHistory.inflationHistory.length) {
     return <NoDataForCountry country={country} />
