@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { Calculator } from "./Calculator"
 import { formatMoney } from "./Form"
+import { getCountryData, type TCountryCode } from "countries-list"
 
 interface Data {
   date: number
@@ -27,7 +28,22 @@ function formatValue(value: number, type: ValueType) {
   }
 }
 
-function Chart({ history, valueIcon, type, color, indicatorDirection, children }: { history: Data[], valueIcon: React.ReactNode, type: ValueType, color: string, indicatorDirection: IndicatorDirection, children: React.ReactNode }) {
+function DeducedWarning({ deducedValues, country }: { deducedValues: number[], country: TCountryCode }) {
+  if (!deducedValues.length) return
+
+  return (
+    <article className="text-center">
+      <div>
+        <span className="text-2xl emoji">⚠️</span>
+      </div>
+      <h2 className="text-lg font-semibold text-balance">
+        Inflation rate data for <Highlight color="darkorange">{getCountryData(country).name}</Highlight> is missing for some years and has been estimated based on the closest available data.
+      </h2>
+    </article>
+  )
+}
+
+function Chart({ history, valueIcon, type, color, indicatorDirection, warningDates, children }: { history: Data[], valueIcon: React.ReactNode, type: ValueType, color: string, indicatorDirection: IndicatorDirection, warningDates?: number[], children: React.ReactNode }) {
   const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { x: number, y: number } }>({ show: false, year: 0, value: 0, position: { x: 0, y: 0 } })
 
   const componentRef = useRef<HTMLDivElement>(null)
@@ -71,7 +87,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
   }
 
   const historyPositions = useMemo(() => {
-    return history.map((({ value }, i) => ({x: getX(i), y: getY(value)})))
+    return history.map((({ value, date }, i) => ({ x: getX(i), y: getY(value), date })))
   }, [history])
 
   function updateIndicator(e: React.MouseEvent) {
@@ -104,7 +120,11 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
     setIndicator({ show: true, year: history[point].date, value: history[point].value, position })
   }
 
-  const historyD = (history.length === 1 ? `${margin} ${historyPositions[0].y} L ` : "") + historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ") + (history.length === 1 ? ` L ${width - margin} ${historyPositions[0].y}` : "")
+  const historyD = (
+    history.length === 1 ?
+      `${margin} ${historyPositions[0].y} L ` : "") + historyPositions.map((({ x, y }) => `${x} ${y}`)).join(" L ") + (history.length === 1 ? ` L ${width - margin} ${historyPositions[0].y}` :
+      ""
+  )
 
   return (
     <article ref={componentRef} onMouseLeave={() => setIndicator(prev => ({ ...prev, show: false }))} onMouseMove={updateIndicator} className="bg-black/5 hover:bg-black/10 cursor-default transition-colors overflow-visible rounded-[6px] shadow w-full py-3 px-2.5 relative flex flex-col justify-between">
@@ -116,12 +136,17 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, children }
         <path fill={color} opacity={0.15} d={`M ${historyD} L ${width - margin} ${height - roundedRadius} Q ${width - margin} ${height}, ${width - margin - roundedRadius} ${height} L ${margin + roundedRadius} ${height} Q ${margin} ${height} ,${margin} ${height - roundedRadius} L ${margin} ${getY(history[0].value)}`} />
         <path fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth={line} stroke={color} d={`M ${historyD}`} />
         <g>
-          {historyPositions.map(({ x, y }, i) => <circle key={i} cx={x} cy={y} fill={color} r={pointRadius} />)}
+          {historyPositions.map(({ x, y, date }, i) => {
+            const isWarningDate = warningDates?.includes(date) ?? false
+
+            return <circle key={i} cx={x} cy={y} stroke={isWarningDate ? color : "none"} strokeWidth={isWarningDate ? 4 : 0} fill={isWarningDate ? "#ffffff" : color} r={isWarningDate ? pointRadius - 2 : pointRadius} />
+          })}
         </g>
       </svg>
 
       <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white transition ease-linear shadow p-2 pointer-events-none z-10">
         <div className="text-black/75 text-lg font-bold">
+          {warningDates?.includes(indicator.year) ? <span className="emoji text-sm inline-block -translate-y-[1px] mr-1">⚠️</span> : ""}
           {indicator.year}
         </div>
         <div>
@@ -154,8 +179,27 @@ function Statistics({ children, values, color }: { children: React.ReactNode, va
   )
 }
 
+function Highlight({ color, children }: { color: string, children: React.ReactNode }) {
+  return (
+    <strong style={{ color }} className="text-shadow-sm font-semibold">{children}</strong>
+  )
+}
+
+function NoDataForCountry({ country }: { country: TCountryCode }) {
+  return (
+    <section className="text-center mt-20">
+      <div>
+        <span className="text-2xl emoji">🚫</span>
+      </div>
+      <h2 className="text-lg font-semibold text-balance">
+        Sorry, there is no available inflation data for <Highlight color="red">{getCountryData(country).name}</Highlight>.
+      </h2>
+    </section>
+  )
+}
+
 export default function Result({ calculator }: { calculator: Calculator }) {
-  const [inflationHistory, setInflationHistory] = useState<Data[]>([])
+  const [inflationHistory, setInflationHistory] = useState<{ inflationHistory: Data[], deducedValues: number[] }>({ inflationHistory: [], deducedValues: [] })
   const [loading, setLoading] = useState(false)
 
   const { year, money, country } = calculator
@@ -165,14 +209,57 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   const now = new Date()
 
   useEffect(() => {
+    function getNextValidValue(jsonObj: Data[], index: number) {
+      for (let i = index; i < jsonObj.length; i++) {
+        if (jsonObj[i].value !== null) {
+          return { value: jsonObj[i].value, index: i }
+        }
+      }
+    }
+
     if (noCalculator) return
 
     setLoading(true)
     ;(async () => {
       const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${year}:${now.getFullYear()}&format=json`)
-      const inflationHistory = (await json.json() as [undefined, Data[]])[1].map(({ date, value }) => ({ date: Number(date), value: value / 100 })).toReversed()
+      const jsonObj = (await json.json() as [undefined, Data[]])[1]
 
-      setInflationHistory(inflationHistory)
+      let inflationHistory: Data[]
+      const deducedValues: number[] = []
+      try {
+        let previousValue = NaN
+
+        inflationHistory = jsonObj.map(({ date, value }, i) => {
+
+          if (value === null) {
+            const nextValidValue = getNextValidValue(jsonObj, i)
+  
+            if (isNaN(previousValue)) {
+              if (nextValidValue !== undefined) {
+                value = nextValidValue.value
+              } else {
+                throw new Error("No valid value")
+              }
+            } else {
+              if (nextValidValue === undefined) {
+                value = previousValue
+              } else {
+                value = ((nextValidValue.value - previousValue) / (nextValidValue.index - (i - 1))) + previousValue
+              }
+            }
+
+            deducedValues.push(Number(date))
+          }
+  
+          previousValue = value
+  
+          return { date: Number(date), value: value / 100 }
+        }).toReversed()
+      } catch {
+        inflationHistory = []
+      }
+
+      setInflationHistory({ inflationHistory, deducedValues })
     })()
     setLoading(false)
   }, [year, money, country])
@@ -183,7 +270,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
     const valueHistory: Data[] = []
 
     valueHistory.push({ date: now.getFullYear(), value: money })
-    inflationHistory.toReversed().forEach(({ date, value: inflation }) => {
+    inflationHistory.inflationHistory.toReversed().forEach(({ date, value: inflation }) => {
       const previousValue = valueHistory[valueHistory.length - 1]?.value ?? money
 
       valueHistory.push({ date, value: previousValue * (1 + inflation) })
@@ -196,12 +283,18 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
   const valueDifference = valueHistory[0].value - valueHistory[valueHistory.length - 1].value
 
+  if (!inflationHistory.inflationHistory.length) {
+    return <NoDataForCountry country={country} />
+  }
+
   return (
     <section className="mt-20 flex flex-col gap-6">
+      <DeducedWarning deducedValues={inflationHistory.deducedValues} country={country} />
+
       <div className="grid grid-cols-2 gap-6">
-        <Chart indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory}>
+        <Chart warningDates={inflationHistory.deducedValues} indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory.inflationHistory}>
           <h2 className="text-xl font-semibold text-center">
-            Annual <strong className="text-[darkorange] text-shadow-sm font-semibold">Inflation Rate</strong>
+            Annual <Highlight color="darkorange">Inflation Rate</Highlight>
           </h2>
           <SubTitle>
             Based on Year-End Data
@@ -209,7 +302,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
         </Chart>
         <Chart indicatorDirection="left" color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory}>
           <h2 className="text-xl font-semibold text-center">
-            <strong className="text-[red] text-shadow-sm font-semibold">Purchasing Power</strong> by year
+            <Highlight color="red">Purchasing Power</Highlight> by year
           </h2>
           <SubTitle>
             Adjusted to Today's Money
@@ -222,7 +315,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
         { value: valueHistory[0].value, type: "money", label: "In Today's Money" }
       ]} color="green">
         <h2 className="text-xl font-semibold text-center">
-           In <span className="text-shadow-sm text-[green]">{year}</span>, Your Money was Worth
+           In <Highlight color="green">{year}</Highlight>, Your Money was Worth
         </h2>
         <SubTitle>
           Before Inflation
@@ -232,10 +325,10 @@ export default function Result({ calculator }: { calculator: Calculator }) {
       <Statistics values={[
         { value: valueDifference / valueHistory[0].value, type: "percentage", label: "Of Your Value" },
         { value: valueDifference, type: "money", label: "In Today's Money" },
-        { value: valueDifference / inflationHistory.length, type: "money", label: "Average in Today's Money", average: true },
+        { value: valueDifference / inflationHistory.inflationHistory.length, type: "money", label: "Average in Today's Money", average: true },
       ]} color="red">
         <h2 className="text-xl font-semibold text-center">
-          You Have <strong className="text-[red] text-shadow-sm font-semibold">Lost</strong>
+          You Have <Highlight color="red">Lost</Highlight>
         </h2>
         <SubTitle>
           Due to Inflation
