@@ -334,7 +334,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
     inflationHistory.inflationHistory.toReversed().forEach(({ date, value: inflation }) => {
       const previousValue = valueHistory[valueHistory.length - 1]?.value ?? money
 
-      valueHistory.push({ date, value: previousValue * (1 + inflation) })
+      valueHistory.push({ date, value: previousValue / (1 - inflation) })
     })
 
     return valueHistory.toReversed()
