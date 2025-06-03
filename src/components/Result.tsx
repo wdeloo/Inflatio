@@ -198,6 +198,63 @@ function NoDataForCountry({ country }: { country: TCountryCode }) {
   )
 }
 
+function Loading({ year }: { year: number }) {
+  return (
+    <section className="mt-20 flex flex-col gap-6 animate-pulse">
+      <div className="grid grid-cols-2 gap-6">
+        <article className="bg-black/5 hover:bg-black/10 cursor-default transition-colors overflow-visible rounded-[6px] shadow w-full py-3 px-2.5 relative flex flex-col justify-between">
+          <header className="mb-5 opacity-25">
+            <h2 className="text-xl font-semibold text-black text-center">
+              Annual <Highlight color="black">Inflation Rate</Highlight>
+            </h2>
+            <SubTitle>
+              Based on Year-End Data
+            </SubTitle>
+          </header>
+          <svg viewBox="0 0 3 1" />
+        </article>
+        <article className="bg-black/5 hover:bg-black/10 cursor-default transition-colors overflow-visible rounded-[6px] shadow w-full py-3 px-2.5 relative flex flex-col justify-between">
+          <header className="mb-5 opacity-25">
+            <h2 className="text-xl font-semibold text-black text-center">
+              <Highlight color="black">Purchasing Power</Highlight> by year
+            </h2>
+            <SubTitle>
+              Adjusted to Today's Money
+            </SubTitle>
+          </header>
+          <svg viewBox="0 0 3 1" />
+        </article>
+      </div>
+
+      <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow cursor-default">
+        <header className="mb-8 opacity-25">
+          <h2 className="text-xl font-semibold text-center">
+            In <Highlight color="black">{year}</Highlight>, Your Money was Worth
+          </h2>
+          <SubTitle>
+            Before Inflation
+          </SubTitle>
+        </header>
+
+        <div className="h-[58px]" />
+      </article>
+
+      <article className="bg-black/5 hover:bg-black/10 transition-colors rounded-[6px] p-3 shadow cursor-default">
+        <header className="mb-8 opacity-25">
+          <h2 className="text-xl font-semibold text-center">
+            You Have <Highlight color="black">Lost</Highlight>
+          </h2>
+          <SubTitle>
+            Due to Inflation
+          </SubTitle>
+        </header>
+
+        <div className="h-[58px]" />
+      </article>
+    </section>
+  )
+}
+
 export default function Result({ calculator }: { calculator: Calculator }) {
   const [inflationHistory, setInflationHistory] = useState<{ inflationHistory: Data[], deducedValues: number[] }>({ inflationHistory: [], deducedValues: [] })
   const [loading, setLoading] = useState(false)
@@ -219,8 +276,8 @@ export default function Result({ calculator }: { calculator: Calculator }) {
 
     if (noCalculator) return
 
-    setLoading(true)
     ;(async () => {
+      setLoading(true)
       const json = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/FP.CPI.TOTL.ZG?date=${year}:${now.getFullYear()}&format=json`)
       const jsonObj = (await json.json() as [undefined, Data[]])[1]
 
@@ -260,8 +317,8 @@ export default function Result({ calculator }: { calculator: Calculator }) {
       }
 
       setInflationHistory({ inflationHistory, deducedValues })
+      setLoading(false)
     })()
-    setLoading(false)
   }, [year, money, country])
 
   const valueHistory = useMemo(() => {
@@ -282,6 +339,10 @@ export default function Result({ calculator }: { calculator: Calculator }) {
   if (noCalculator || !valueHistory) return
 
   const valueDifference = valueHistory[0].value - valueHistory[valueHistory.length - 1].value
+
+  if (loading) {
+    return <Loading year={year} />
+  }
 
   if (!inflationHistory.inflationHistory.length) {
     return <NoDataForCountry country={country} />
