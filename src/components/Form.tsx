@@ -229,7 +229,7 @@ export default function Form({ setCalculator }: { setCalculator: Dispatch<SetSta
       </div>
 
       <button className="py-1 px-2 cursor-pointer bg-black/5 hover:bg-black/10 flex flex-row items-center gap-1 transition-colors text-lg rounded-[6px]" type="submit">
-        <img src="/logo.svg" width="20px" /> Calculate
+        <img src="/images/logo.svg" width="20px" /> Calculate
       </button>
     </form>
   )

@@ -4,11 +4,20 @@ interface Link {
   href: string
 }
 
+interface LinkIcon {
+  alt: string
+  href: string
+  icon: string
+}
+
 const path = Astro.originPathname
 
 const links: Link[] = [
   { label: "Calculator", href: "/" },
-  { label: "Historic", href: "/history" },
+]
+
+const rightLinks: LinkIcon[] = [
+  { alt: "Source Code", href: "https://github.com/wdeloo/Inflatio", icon: "/images/github.svg" }
 ]
 
 const height = 32
@@ -19,13 +28,20 @@ const heightPx = height + "px"
   <ul class="flex flex-row items-center gap-1">
     <li class="mr-3">
       <a href="/">
-        <img width={heightPx} height={heightPx} src="/logo.svg" />
+        <img width={heightPx} height={heightPx} src="/images/logo.svg" />
       </a>
     </li>
-    {links.map(link => (
+    {links.map(({ label, href }) => (
       <li>
-        <a style={{ height: heightPx, backgroundColor: path === link.href ? "rgb(0, 0, 0, 0.1)" : undefined }} class="content-center block rounded-[6px] hover:bg-black/10 transition-colors px-2" href={link.href}>
-          {link.label}
+        <a style={{ height: heightPx, backgroundColor: path === href ? "rgb(0, 0, 0, 0.1)" : undefined }} class="content-center block rounded-[6px] hover:bg-black/10 transition-colors px-2" href={href}>
+          {label}
+        </a>
+      </li>
+    ))}
+    {rightLinks.map(({ alt, href, icon }, i) => (
+      <li style={{ marginLeft: i === 0 ? "auto" : "" }}>
+        <a class="opacity-50 hover:opacity-75 transition-opacity" target="_blank" style={{ height: heightPx }} href={href}>
+          <img width="32px" src={icon} alt={alt} />
         </a>
       </li>
     ))}
