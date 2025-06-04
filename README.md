@@ -2,7 +2,7 @@
 
 ![screenshot](images/screenshot.png)
 
-[Inflatio](https://wdeloo.github.com/Inflatio) is a web application that helps you calculate how inflation has affected your purchasing power.
+[Inflatio](https://wdeloo.github.io/Inflatio/) is a web application that helps you calculate how inflation has affected your purchasing power.
 
 ## Self Hosting
 
