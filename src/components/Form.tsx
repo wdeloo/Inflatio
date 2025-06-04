@@ -88,7 +88,7 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
       <div style={{ display: isOpen ? '' : 'none' }} className="absolute z-20 top-[calc(100%+var(--spacing)*2)] left-0 bg-white rounded-[6px] min-w-full w-max max-w-70 shadow overflow-hidden">
         <div className="bg-black/5 p-0.5">
           <search onClick={focusSearch} className="mb-0.5 flex cursor-text flex-row bg-black/10 rounded-[6px] w-full px-1.5 py-0.5 gap-1.5">
-            <img src="images/search.svg" width={24.9} className="scale-110" />
+            <img src={import.meta.env.BASE_URL + "/images/search.svg"} width={24.9} className="scale-110" />
             <input value={search} onChange={handleSearch} ref={searchRef} type="text" className="outline-none" />
           </search>
           <ul className="w-full h-full max-h-72 overflow-y-auto">
@@ -229,7 +229,7 @@ export default function Form({ setCalculator }: { setCalculator: Dispatch<SetSta
       </div>
 
       <button className="py-1 px-2 cursor-pointer bg-black/5 hover:bg-black/10 flex flex-row items-center gap-1 transition-colors text-lg rounded-[6px]" type="submit">
-        <img src="/images/logo.svg" width="20px" /> Calculate
+        <img src={import.meta.env.BASE_URL + "/images/logo.svg"} width="20px" /> Calculate
       </button>
     </form>
   )
