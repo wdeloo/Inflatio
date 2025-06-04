@@ -100,10 +100,14 @@ function CountriesInput({ countryState }: { countryState: [TCountryCode, React.D
   )
 }
 
-export function formatMoney(money: number) {
+function formatMoneyNumber(money: number, slice?: boolean) {
+  return slice ? Number(Math.round(money).toString().slice(0, 14)) : Number(Math.round(money).toString())
+}
+
+export function formatMoney(money: number, slice?: boolean) {
   if (isNaN(money)) return ""
 
-  money = Number(Math.round(money).toString().slice(0, 14))
+  money = formatMoneyNumber(money, slice)
 
   return money.toLocaleString()
 }
@@ -115,9 +119,9 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
 
   function updateInput(e: React.ChangeEvent) {
     const value = (e.currentTarget as HTMLInputElement).value
-    const money = value.replace(/[^0-9]/g, "")
+    const money = Number(value.replace(/[^0-9]/g, ""))
 
-    setMoney(Number(money) || NaN)
+    setMoney(formatMoneyNumber(money, true) || NaN)
   }
 
   function focusInput() {
@@ -132,8 +136,8 @@ function MoneyInput({ moneyState }: { moneyState: [number, React.Dispatch<React.
         💲
       </span>
       <div className="relative w-fit min-w-8.5">
-        <span className="font-normal text-xl opacity-0 h-full block">{formatMoney(money)}</span>
-        <input ref={inputRef} value={formatMoney(money)} onChange={updateInput} type="text" placeholder="100" className="outline-none placeholder:text-black/50 group font-normal text-xl w-full absolute left-0 top-1/2 -translate-y-1/2" />
+        <span className="font-normal text-xl opacity-0 h-full block">{formatMoney(money, true)}</span>
+        <input ref={inputRef} value={formatMoney(money, true)} onChange={updateInput} type="text" placeholder="100" className="outline-none placeholder:text-black/50 group font-normal text-xl w-full absolute left-0 top-1/2 -translate-y-1/2" />
       </div>
     </div>
   )
