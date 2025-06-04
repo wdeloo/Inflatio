@@ -43,8 +43,8 @@ function DeducedWarning({ deducedValues, country }: { deducedValues: number[], c
   )
 }
 
-function Chart({ history, valueIcon, type, color, indicatorDirection, warningDates, children }: { history: Data[], valueIcon: React.ReactNode, type: ValueType, color: string, indicatorDirection: IndicatorDirection, warningDates?: number[], children: React.ReactNode }) {
-  const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { x: number, y: number } }>({ show: false, year: 0, value: 0, position: { x: 0, y: 0 } })
+function Chart({ history, valueIcon, type, color, warningDates, children }: { history: Data[], valueIcon: React.ReactNode, type: ValueType, color: string, warningDates?: number[], children: React.ReactNode }) {
+  const [indicator, setIndicator] = useState<{ show: boolean, year: number, value: number, position: { x: number, y: number }, borderRadius: string }>({ show: false, year: 0, value: 0, position: { x: 0, y: 0 }, borderRadius: "6px 6px 6px 6px" })
 
   const componentRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -112,12 +112,34 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, warningDat
     const containerRect = container.getBoundingClientRect()
     const indicatorRect = indicator.getBoundingClientRect()
 
+    const borderRadius = ["0", "0", "0", "0"]
+
     const position = {
-      x: historyPositions[point].x * (svgRect.width / width) + (svgRect.left - containerRect.left) - (indicatorDirection === "left" ? indicatorRect.width : 0),
+      x: historyPositions[point].x * (svgRect.width / width) + (svgRect.left - containerRect.left),
       y: historyPositions[point].y * (svgRect.height / height) + (svgRect.top - containerRect.top)
     }
 
-    setIndicator({ show: true, year: history[point].date, value: history[point].value, position })
+    if (containerRect.left + position.x + indicatorRect.width > containerRect.right) {
+      position.x = position.x - indicatorRect.width
+      
+      borderRadius[0] = "6px"
+      borderRadius[3] = "6px"
+    } else {
+      borderRadius[1] = "6px"
+      borderRadius[2] = "6px"
+    }
+
+    if (containerRect.top + position.y + indicatorRect.height > containerRect.bottom) {
+      position.y = position.y - indicatorRect.height
+
+      borderRadius[0] = "6px"
+      borderRadius[1] = "6px"
+    } else {
+      borderRadius[2] = "6px"
+      borderRadius[3] = "6px"
+    }
+
+    setIndicator({ show: true, year: history[point].date, value: history[point].value, position, borderRadius: borderRadius.join(" ") })
   }
 
   const historyD = (
@@ -144,7 +166,7 @@ function Chart({ history, valueIcon, type, color, indicatorDirection, warningDat
         </g>
       </svg>
 
-      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: `${indicatorDirection === "left" ? 6 : 0}px ${indicatorDirection === "right" ? 6 : 0}px 6px 6px` }} className="absolute top-0 left-0 bg-white transition ease-linear shadow p-2 pointer-events-none z-10">
+      <div ref={indicatorRef} style={{ opacity: indicator.show ? 1 : 0, transform: `translate(${indicator.position.x}px, ${indicator.position.y}px)`, borderRadius: indicator.borderRadius }} className="absolute top-0 left-0 bg-white transition ease-linear shadow p-2 pointer-events-none z-10">
         <div className="text-black/75 text-lg font-bold">
           {warningDates?.includes(indicator.year) ? <span className="emoji text-sm inline-block -translate-y-[1px] mr-1">⚠️</span> : ""}
           {indicator.year}
@@ -358,8 +380,8 @@ export default function Result({ calculator }: { calculator: Calculator }) {
     <section className="mt-20 flex flex-col gap-6">
       <DeducedWarning deducedValues={inflationHistory.deducedValues} country={country} />
 
-      <div className="grid grid-cols-2 gap-6">
-        <Chart warningDates={inflationHistory.deducedValues} indicatorDirection="right" color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory.inflationHistory}>
+      <div className="grid grid-cols-2 max-[615px]:grid-cols-1 gap-6">
+        <Chart warningDates={inflationHistory.deducedValues} color="darkorange" type="percentage" valueIcon={<span className="emoji -ml-0.5 mr-0.5 text-lg">🏦</span>} history={inflationHistory.inflationHistory}>
           <h2 className="text-xl font-semibold text-center">
             Annual <Highlight color="darkorange">Inflation Rate</Highlight>
           </h2>
@@ -367,7 +389,7 @@ export default function Result({ calculator }: { calculator: Calculator }) {
             Based on Year-End Data
           </SubTitle>
         </Chart>
-        <Chart indicatorDirection="left" color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory}>
+        <Chart color="red" type="money" valueIcon={<span className="emoji -ml-1 text-lg">💲</span>} history={valueHistory}>
           <h2 className="text-xl font-semibold text-center">
             <Highlight color="red">Purchasing Power</Highlight> by year
           </h2>
