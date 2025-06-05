@@ -9,8 +9,8 @@
 1. Clone the repository:
 
 ```
-git clone https://github.com/wdeloo/Brilliant-Chess.git
-cd Brilliant-Chess
+git clone https://github.com/wdeloo/Inflatio.git
+cd Inflatio
 ```
 
 2. Install dependencies and build the project:
